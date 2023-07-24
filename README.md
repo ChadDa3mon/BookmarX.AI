@@ -24,6 +24,8 @@ This is my first time doing something like this so please go easy on me :)
 
 The database structure itself is stored in `bookmarx.sql`. You should be able to create the databse with `mysql -u <username> -p <database_name> < database_structure.sql`. 
 
+Add your tags to the 'tags' table, just one tag per row
+
 Install the python requirements via `python -m pip install -r requirements.txt`
 
 Build the docker container with `sudo docker build -t bookmarx .`
