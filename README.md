@@ -26,13 +26,22 @@ The database structure itself is stored in `bookmarx.sql`. You should be able to
 
 Add your tags to the 'tags' table, just one tag per row
 
-Install the python requirements via `python -m pip install -r requirements.txt`
-
 Build the docker container with `sudo docker build -t bookmarx .`
 
 Copy `.env-template` to `.env` and fill in the values
 
 You should then be able to run things with this command: `sudo docker run -d -p 8332:8000 --env-file .env bookmarkx`
+
+## Installation and deployment with Docker Compose
+
+You can run one of the following commands to start the application with Docker Compose:
+
+```bash
+# Newer versions of Docker include compose functionality
+docker compose up -d
+# If docker-compose is installed as a separate package
+docker-compose up -d
+```
 
 # Usage
 Right now I just have the API endpoint for submitting a bookmark (I'm much more concerned with being able store things first....retrieve them later). 
