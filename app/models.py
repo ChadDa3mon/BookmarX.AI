@@ -1,6 +1,6 @@
-from pydantic import BaseModel,validator, HttpUrl,root_validator
+from pydantic import BaseModel,validator, HttpUrl,root_validator,Field
 import urllib.parse
-from typing import ClassVar
+from typing import ClassVar,List
 from logstuff import setup_logging
 
 logger = setup_logging()
@@ -37,3 +37,18 @@ class Bookmark(BaseModel):
         else:
             logger.debug(f"Tracking found, new URL: {new_url}")
         return new_url 
+
+class BookmarxResponse(BaseModel):
+    url: str
+    summary: str
+    raw_text: str
+    markdown: str
+
+class Bookmarx(BaseModel):
+    """Bookmarx represents a single entry"""
+    id: int = Field(..., description="Some description of the int", ge=0)
+    url: str
+    summary: str
+
+class BookmarxListResponse(BaseModel):
+    bookmarx: List[Bookmarx]

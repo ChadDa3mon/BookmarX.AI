@@ -32,11 +32,51 @@ cnx = mysql.connector.connect(
 def search_db(search_term):
     logger.info(f"Searching for '{search_term}")
     cursor = cnx.cursor()
-    query = "select url,summary from webpages where match(raw_text) against (%s in natural language mode);"
+    query = "select id,url,summary from webpages where match(raw_text) against (%s in natural language mode);"
     cursor.execute(query, (search_term,))
     rows = cursor.fetchall()
     cursor.close()
     return rows
+
+def get_all_bookmarx():
+    cursor = cnx.cursor()
+    query = "select id,url,summary from webpages"
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    cursor.close
+
+    # Convert the rows tuple into a list of dictionaries
+    bookmarx_list = [{"id": int(row[0]), "url": row[1], "summary": row[2]} for row in rows]
+    return bookmarx_list
+
+def get_bookmarx_by_id(id):
+    logger.info(f"Retrieving results for ID: {id}")
+    cursor = cnx.cursor()
+    query = "select url,summary,raw_text,markdown from webpages where id = %s"
+    cursor.execute(query,(id,))
+    row = cursor.fetchone()
+    cursor.close()
+
+    if row is None: # Make sure I got something back
+        logger.error(f"No results found for ID: {id}")
+        return f"No match for ID: {id}"
+
+    # row comes back as a tuple, I want to convert it to a dict so I can send it back via FastAPI as JSON
+    if not isinstance(row,str): 
+        logger.debug(f"Retrieved Results for ID {id}")
+        bookmark_dict = {
+            "url": row[0],
+            "summary": row[1],
+            "raw_text": row[2],
+            "markdown": row[3]
+        }
+        return bookmark_dict
+    else:
+        logger.error(f"Error retrieving results for ID: {id}: {row}")
+        return {"error": row}
+
+    
+    
 
 def get_markdown(url):
     my_url = url['URL'].tolist()[0]
@@ -206,4 +246,7 @@ async def add_bookmark(url):
 
 if __name__ == "__main__":
     url = "https://www.linkedin.com/pulse/3-ways-vector-databases-take-your-llm-use-cases-next-level-mishra"
-    add_bookmark(url)
+    #add_bookmark(url)
+    #results = get_bookmarx_by_id("1")
+    results = get_all_bookmarx()
+    print(f"Results is type {type(results)}\n{results} ")
