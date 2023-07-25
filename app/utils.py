@@ -8,7 +8,7 @@ import json
 from datetime import date
 import asyncio
 from logstuff import setup_logging
-
+from exceptions import URLAlreadyExistsError, WriteArticleToDBError
 
 logger = setup_logging()
 
@@ -179,11 +179,15 @@ and you will transform it into markdown syntax, then send it back to me."""
 async def add_bookmark(url):
     logger.info(f"Received request to download {url}")
     logger.info(f"Checking to see if we already have {url} in our database")
+
     already_exists = await get_url_from_db(url)
     if already_exists:
-        logger.info(f"URL {url} already exists, skipping")
-        return "URL Already Exists"
+        msg = f"URL {url} already exists in database"
+        logger.error(msg)
+        raise URLAlreadyExistsError(msg)
+    
     logger.info("{url} not found in database, proceeding to add")
+    
     webpage_title, webpage_text = await get_webpage_text(url)
     webpage_summary_payload = await query_gpt_summary(webpage_text)
     webpage_dict = json.loads(webpage_summary_payload)
@@ -192,13 +196,12 @@ async def add_bookmark(url):
     webpage_markdown = await query_gpt_markdown(webpage_text)
     db_update_reult = await write_article_to_db(webpage_title,webpage_summary,webpage_text,webpage_markdown,url,tags)
 
-    if db_update_reult:
-        logger.info(f"URL {url} successfully added to database")
-        return "URL Added Successfully"
-    else:
-        logger.info(f"Failed to add URL {url} the database")
-        return "Failed to add URL"
-
+    if not db_update_reult:
+        msg = f"Failed to add URL {url} the database"
+        logger.error(msg)
+        raise WriteArticleToDBError(msg)
+    
+    logger.info(f"URL {url} successfully added to database")
   
 
 if __name__ == "__main__":
