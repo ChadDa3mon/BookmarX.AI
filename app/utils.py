@@ -29,14 +29,45 @@ cnx = mysql.connector.connect(
     database=db_name
     )
 
-def search_db(search_term):
-    logger.info(f"Searching for '{search_term}")
-    cursor = cnx.cursor()
-    query = "select id,url,summary from webpages where match(raw_text) against (%s in natural language mode);"
-    cursor.execute(query, (search_term,))
-    rows = cursor.fetchall()
-    cursor.close()
-    return rows
+# def search_db(search_term):
+#     cnx = mysql.connector.connect(
+#     host=db_host,
+#     user=db_user,
+#     password=db_pass,
+#     database=db_name
+#     )
+
+#     logger.info(f"Searching for '{search_term}")
+#     cursor = cnx.cursor()
+#     query = "select id,url,summary from webpages where match(raw_text) against (%s in natural language mode);"
+#     cursor.execute(query, (search_term,))
+#     rows = cursor.fetchall()
+#     cursor.close()
+#     return rows
+
+def search_db(search_term, cursor=None):
+    # If no cursor is provided, create one using the connection
+    if cursor is None:
+        cnx = mysql.connector.connect(
+        host=db_host,
+        user=db_user,
+        password=db_pass,
+        database=db_name
+        ) 
+        cursor = cnx.cursor()
+
+    cursor.execute(
+        'select id,url,summary from webpages where match(raw_text) against (%s in natural language mode);',
+        (search_term,)
+    )
+    result = cursor.fetchall()
+
+    # If a connection was created, close it
+    if cursor is None:
+        cnx.close()
+
+    return result
+
 
 def get_all_bookmarx():
     cursor = cnx.cursor()
