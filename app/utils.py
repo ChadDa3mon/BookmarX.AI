@@ -61,10 +61,11 @@ def search_db(search_term, cursor=None):
         (search_term,)
     )
     result = cursor.fetchall()
+    cursor.close()
 
     # If a connection was created, close it
-    if cursor is None:
-        cnx.close()
+    # if cursor is None:
+    #     cnx.close()
 
     return result
 
@@ -167,11 +168,12 @@ async def write_article_to_db(webpage_title,webpage_summary,webpage_text,webpage
     try:
         cursor.execute(query, values)
         cnx.commit()
+        cursor.close()
         return True
     except Exception as e:
         logger.error(f"Error: {e} ")
+        cursor.close()
         return False
-    cursor.close()
 
 
 
@@ -257,7 +259,7 @@ async def add_bookmark(url):
         logger.error(msg)
         raise URLAlreadyExistsError(msg)
     
-    logger.info("{url} not found in database, proceeding to add")
+    logger.info(f"{url} not found in database, proceeding to add")
     
     webpage_title, webpage_text = await get_webpage_text(url)
     webpage_summary_payload = await query_gpt_summary(webpage_text)

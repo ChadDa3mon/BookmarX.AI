@@ -29,8 +29,8 @@ class Bookmark(BaseModel):
 
         # Replace the old query string with the new one in the URL
         stripped_url = parsed_url._replace(query=new_query).geturl()
-        logger.info(f"DEBUG: Original URL: {v}")
-        logger.info(f"DEBUG: Stripped URL: {stripped_url}")
+        logger.debug(f"DEBUG: Original URL: {v}")
+        logger.debug(f"DEBUG: Stripped URL: {stripped_url}")
         return stripped_url
 
 

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from models import Bookmark,BookmarxResponse,BookmarxListResponse
 from typing import List
 from utils import add_bookmark,get_all_bookmarx,get_bookmarx_by_id
-from exceptions import URLAlreadyExistsError, WriteArticleToDBError
+# from exceptions import URLAlreadyExistsError, WriteArticleToDBError
 
 
 app = FastAPI()
@@ -30,14 +30,14 @@ async def get_bookmarx(id: int = Path(..., title="Bookmark ID")):
 @app.post("/bookmarks/add")
 async def add_bookmark_route(payload: Bookmark):
     url = str(payload.url)
-    print(f"Received URL: {url}")
+    # print(f"Received URL: {url}")
     
     try:
         await add_bookmark(url)
-    except URLAlreadyExistsError as e:
-        return {"message": str(e)}
-    except WriteArticleToDBError as e:
-        return {"message": str(e)}
+    # except URLAlreadyExistsError as e:
+    #     return {"message": str(e)}
+    # except WriteArticleToDBError as e:
+    #     return {"message": str(e)}
     except Exception:
         return {"message": "An unknown error occurred"}
     
