@@ -1,5 +1,5 @@
-def URLAlreadyExistsError(Exception):
+class URLAlreadyExistsError(Exception):
     pass
 
-def WriteArticleToDBError(Exception):
+class WriteArticleToDBError(Exception):
     pass

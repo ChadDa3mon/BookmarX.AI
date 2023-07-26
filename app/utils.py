@@ -256,8 +256,9 @@ async def add_bookmark(url):
     already_exists = await get_url_from_db(url)
     if already_exists:
         msg = f"URL {url} already exists in database"
-        logger.error(msg)
+        logger.info(msg)
         raise URLAlreadyExistsError(msg)
+        return msg
     
     logger.info(f"{url} not found in database, proceeding to add")
     

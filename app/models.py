@@ -74,3 +74,9 @@ class Bookmarx(BaseModel):
 
 class BookmarxListResponse(BaseModel):
     bookmarx: List[Bookmarx]
+
+def URLAlreadyExistsError(Exception):
+    pass
+
+def WriteArticleToDBError(Exception):
+    pass
