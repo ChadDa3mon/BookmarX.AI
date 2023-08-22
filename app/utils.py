@@ -9,6 +9,9 @@ from datetime import date
 import asyncio
 from logstuff import setup_logging
 from exceptions import URLAlreadyExistsError, WriteArticleToDBError
+# import pymysql
+# from pymysqlpool import ConnectionPool
+import mysql.connector.pooling
 
 logger = setup_logging()
 
@@ -22,12 +25,20 @@ db_user = os.getenv("DB_USER")
 db_pass = os.getenv("DB_PASS")
 db_name = os.getenv("DB_NAME")
 
-cnx = mysql.connector.connect(
+# cnx = mysql.connector.connect(
+#     host=db_host,
+#     user=db_user,
+#     password=db_pass,
+#     database=db_name
+#     )
+pool = mysql.connector.pooling.MySQLConnectionPool(
     host=db_host,
     user=db_user,
     password=db_pass,
-    database=db_name
-    )
+    database=db_name,
+    pool_name="mypool",
+    pool_size=5  # Set the desired pool size
+)
 
 # def search_db(search_term):
 #     cnx = mysql.connector.connect(
@@ -48,13 +59,8 @@ cnx = mysql.connector.connect(
 def search_db(search_term, cursor=None):
     # If no cursor is provided, create one using the connection
     if cursor is None:
-        cnx = mysql.connector.connect(
-        host=db_host,
-        user=db_user,
-        password=db_pass,
-        database=db_name
-        ) 
-        cursor = cnx.cursor()
+        connection = pool.get_connection()
+        cursor = connection.cursor()
 
     cursor.execute(
         'select id,url,summary from webpages where match(raw_text) against (%s in natural language mode);',
@@ -62,6 +68,7 @@ def search_db(search_term, cursor=None):
     )
     result = cursor.fetchall()
     cursor.close()
+    connection.close()
 
     # If a connection was created, close it
     # if cursor is None:
@@ -71,11 +78,13 @@ def search_db(search_term, cursor=None):
 
 
 def get_all_bookmarx():
-    cursor = cnx.cursor()
+    connection = pool.get_connection()
+    cursor = connection.cursor()
     query = "select id,url,summary from webpages"
     cursor.execute(query)
     rows = cursor.fetchall()
-    cursor.close
+    cursor.close()
+    connection.close()
 
     # Convert the rows tuple into a list of dictionaries
     bookmarx_list = [{"id": int(row[0]), "url": row[1], "summary": row[2]} for row in rows]
@@ -83,11 +92,14 @@ def get_all_bookmarx():
 
 def get_bookmarx_by_id(id):
     logger.info(f"Retrieving results for ID: {id}")
+    connection = pool.get_connection()
+    cursor = connection.cursor()
     cursor = cnx.cursor()
     query = "select url,summary,raw_text,markdown from webpages where id = %s"
     cursor.execute(query,(id,))
     row = cursor.fetchone()
     cursor.close()
+    connection.close()
 
     if row is None: # Make sure I got something back
         logger.error(f"No results found for ID: {id}")
@@ -111,13 +123,18 @@ def get_bookmarx_by_id(id):
     
 
 def get_markdown(url):
-    my_url = url['URL'].tolist()[0]
-    logger.debug(f"Retrieving markdown for {url['URL'].tolist()[0]}")
-    cursor = cnx.cursor()
+    #my_url = url['URL'].tolist()[0]
+    my_url_list = [url]
+    #logger.info(f"Retrieving markdown for {url['URL'].tolist()[0]}")
+    logger.info(f"Retrieving markdown for {url}")
+    connection = pool.get_connection()
+    cursor = connection.cursor()
     query = "select markdown from webpages where url = %s"
-    cursor.execute(query, (url['URL'].tolist()))
-    row = cursor.fetchone()  
+    #cursor.execute(query, (url['URL'].tolist()))
+    cursor.execute(query, (my_url_list))
+    row = cursor.fetchone()
     cursor.close()
+    connection.close()
 
     if row is not None:
         # Extract the value from the tuple (assuming 'markdown' is the first column)
@@ -131,23 +148,27 @@ def get_markdown(url):
 
 
 async def get_tags():
-    cursor = cnx.cursor()
+    connection = pool.get_connection()
+    cursor = connection.cursor()
     query = "SELECT * from tags"
     cursor.execute(query)
     rows = cursor.fetchall()
     tags_list = [row[1] for row in rows]
     cursor.close()
+    connection.close()
 
     return tags_list
 
 async def get_url_from_db(url):
     logger.debug(f"Checking DB for URL: {url}")
     try:
-        cursor = cnx.cursor()
+        connection = pool.get_connection()
+        cursor = connection.cursor()
         query = f"SELECT * from webpages where url = '{url}'"
         cursor.execute(query)
         rows = cursor.fetchall()
         cursor.close()
+        connection.close()
 
         if not rows: #No results found
             logger.debug(f"URL {url} was not found in the database")
@@ -162,17 +183,20 @@ async def write_article_to_db(webpage_title,webpage_summary,webpage_text,webpage
     logger.info(f"Writing URL: {url} to database")
     current_date = date.today().isoformat()
     tags_str = ",".join(tags)
-    cursor = cnx.cursor()
+    connection = pool.get_connection()
+    cursor = connection.cursor()
     query = f"INSERT INTO {db_table} (url, title, date_added, summary, raw_text, tags, markdown) VALUES (%s, %s, %s, %s, %s, %s, %s)"
     values = (url, webpage_title, current_date, webpage_summary, webpage_text, tags_str, webpage_markdown)
     try:
         cursor.execute(query, values)
-        cnx.commit()
+        connection.commit()
         cursor.close()
+        connection.close()
         return True
     except Exception as e:
         logger.error(f"Error: {e} ")
         cursor.close()
+        connection.close()
         return False
 
 
